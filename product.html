@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kick Whispers — Private DMs for Kick</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --green: #53fc18;
+      --green-glow: rgba(83,252,24,0.15);
+      --bg: #060606;
+      --surface: #0f0f0f;
+      --surface2: #141414;
+      --border: #1c1c1c;
+      --border2: #252525;
+      --text: #e4e4e4;
+      --muted: #666;
+      --muted2: #999;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ─────────────────── NAV ─────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      background: rgba(6,6,6,0.8);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.1px;
+    }
+    .nav-logo-mark {
+      width: 28px; height: 28px;
+      background: var(--green);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-logo-mark svg { display: block; }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a {
+      color: var(--muted);
+      font-size: 0.85rem;
+      transition: color 0.15s;
+      letter-spacing: 0.1px;
+    }
+    .nav-links a:hover { color: #ccc; text-decoration: none; }
+    .btn-nav {
+      background: transparent !important;
+      color: var(--green) !important;
+      font-weight: 600;
+      font-size: 0.85rem !important;
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(83,252,24,0.3);
+      transition: background 0.15s, border-color 0.15s !important;
+    }
+    .btn-nav:hover {
+      background: rgba(83,252,24,0.06) !important;
+      border-color: rgba(83,252,24,0.5) !important;
+      text-decoration: none !important;
+    }
+
+    /* ─────────────────── HERO ─────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 100px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .hero-bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 80%);
+    }
+    .hero-glow {
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 700px;
+      background: radial-gradient(ellipse at center, rgba(83,252,24,0.09) 0%, rgba(83,252,24,0.03) 40%, transparent 70%);
+    }
+    .hero-glow-2 {
+      position: absolute;
+      bottom: -100px; left: 20%;
+      width: 400px; height: 400px;
+      background: radial-gradient(ellipse, rgba(83,252,24,0.04) 0%, transparent 70%);
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 100px;
+      padding: 6px 16px;
+      margin-bottom: 36px;
+      position: relative;
+    }
+    .hero-eyebrow-text {
+      font-size: 0.76rem;
+      color: var(--muted2);
+      letter-spacing: 0.3px;
+    }
+    .hero-eyebrow-sep {
+      width: 1px; height: 10px;
+      background: rgba(255,255,255,0.1);
+    }
+    .hero-eyebrow-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--green);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-size: clamp(3rem, 7vw, 5.2rem);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -2px;
+      color: #fff;
+      max-width: 860px;
+      margin: 0 auto 28px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--green);
+      position: relative;
+    }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 460px;
+      margin: 0 auto 52px;
+      line-height: 1.75;
+      font-weight: 400;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 80px;
+    }
+    .btn-primary {
+      background: var(--green);
+      color: #000;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 13px 30px;
+      border-radius: 8px;
+      letter-spacing: -0.1px;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); text-decoration: none; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted2);
+      font-size: 0.9rem;
+      padding: 13px 30px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-ghost:hover { border-color: #383838; color: #ddd; text-decoration: none; }
+
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .hero-stat-val span { color: var(--green); }
+    .hero-stat-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ─────────────────── SECTION SHELL ─────────────────── */
+    section { padding: 100px 48px; }
+    .inner { max-width: 1080px; margin: 0 auto; }
+
+    .eyebrow {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .eyebrow::before {
+      content: '';
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: var(--green);
+    }
+    .sec-title {
+      font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.8px;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .sec-sub {
+      font-size: 0.97rem;
+      color: var(--muted);
+      max-width: 460px;
+      line-height: 1.75;
+      margin-bottom: 60px;
+    }
+
+    /* ─────────────────── FEATURE BENTO ─────────────────── */
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-auto-rows: minmax(160px, auto);
+      gap: 12px;
+    }
+    .bento-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .bento-card:hover { border-color: var(--border2); }
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    }
+    .bento-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+    }
+    .bento-card p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .bento-card-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--green);
+      background: rgba(83,252,24,0.08);
+      border: 1px solid rgba(83,252,24,0.15);
+      padding: 3px 10px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+    }
+    .bento-glow {
+      position: absolute;
+      bottom: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(ellipse, rgba(83,252,24,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    /* Column spans */
+    .span-5 { grid-column: span 5; }
+    .span-7 { grid-column: span 7; }
+    .span-4 { grid-column: span 4; }
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-12 { grid-column: span 12; }
+    @media (max-width: 900px) {
+      .bento-card { grid-column: span 12 !important; }
+    }
+
+    /* ─────────────────── ALT BG ─────────────────── */
+    .alt-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ─────────────────── WHO IT'S FOR ─────────────────── */
+    .audience-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 60px;
+    }
+    @media (max-width: 640px) { .audience-grid { grid-template-columns: 1fr; } }
+    .audience-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 30px;
+      transition: border-color 0.2s;
+    }
+    .audience-card:hover { border-color: var(--border2); }
+    .audience-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--green);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      opacity: 0.7;
+    }
+    .audience-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -0.1px;
+    }
+    .audience-card p { font-size: 0.875rem; color: var(--muted); line-height: 1.65; }
+
+    /* Experience steps */
+    .exp-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      position: relative;
+    }
+    .exp-steps::before {
+      content: '';
+      position: absolute;
+      top: 28px; left: 28px; right: 28px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--green), rgba(83,252,24,0.2), transparent);
+    }
+    @media (max-width: 700px) {
+      .exp-steps { grid-template-columns: 1fr 1fr; }
+      .exp-steps::before { display: none; }
+    }
+    .exp-step { padding: 0 28px 0 0; }
+    .exp-step-circle {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--green);
+      background: var(--bg);
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+      letter-spacing: -0.5px;
+    }
+    .exp-step h4 { font-size: 0.92rem; font-weight: 700; color: #ddd; margin-bottom: 8px; }
+    .exp-step p { font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
+
+    /* ─────────────────── MODERATION ─────────────────── */
+    .mod-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 60px;
+      align-items: start;
+    }
+    @media (max-width: 800px) { .mod-layout { grid-template-columns: 1fr; gap: 40px; } }
+    .mod-sticky { position: sticky; top: 80px; }
+    .mod-description {
+      font-size: 0.93rem;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+    .mod-disclaimer {
+      font-size: 0.8rem;
+      color: #3a3a3a;
+      font-style: italic;
+      line-height: 1.6;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .mod-items { display: flex; flex-direction: column; gap: 2px; }
+    .mod-item {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 18px 20px;
+      border-radius: 10px;
+      transition: background 0.15s;
+      cursor: default;
+    }
+    .mod-item:hover { background: rgba(255,255,255,0.02); }
+    .mod-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: rgba(83,252,24,0.4);
+      padding-top: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .mod-content strong {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #d8d8d8;
+      margin-bottom: 3px;
+    }
+    .mod-content span { font-size: 0.85rem; color: var(--muted); line-height: 1.55; }
+
+    /* ─────────────────── HOW DMs WORK ─────────────────── */
+    .dm-intro-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 700px) { .dm-intro-grid { grid-template-columns: 1fr; } }
+    .dm-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .dm-card-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .dm-card-value {
+      font-size: 0.88rem;
+      color: #bbb;
+      line-height: 1.65;
+    }
+
+    .tier-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .tier-header {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tier-header span {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tier-row {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      padding: 20px 24px;
+      gap: 24px;
+      border-bottom: 1px solid #0f0f0f;
+      align-items: center;
+    }
+    .tier-row:last-child { border-bottom: none; }
+    .tier-row:hover { background: rgba(255,255,255,0.01); }
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .tier-badge-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .tier-badge.free .tier-badge-dot { background: #3a3a3a; }
+    .tier-badge.free { color: #666; }
+    .tier-badge.pro .tier-badge-dot { background: var(--green); }
+    .tier-badge.pro { color: var(--green); }
+    .tier-desc { font-size: 0.86rem; color: var(--muted); line-height: 1.6; }
+
+    /* ─────────────────── FOOTER NOTE ─────────────────── */
+    .note-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 24px 48px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .note-bar-icon {
+      width: 6px; height: 6px;
+      background: var(--muted);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .note-bar p { font-size: 0.82rem; color: #3e3e3e; line-height: 1.6; }
+    .note-bar a { color: #555; }
+    .note-bar a:hover { color: #888; }
+
+    /* ─────────────────── COMING SOON ─────────────────── */
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 800px) { .roadmap-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 500px) { .roadmap-grid { grid-template-columns: 1fr; } }
+    .roadmap-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 26px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .roadmap-card:hover { border-color: var(--border2); }
+    .roadmap-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+    }
+    .roadmap-pill {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #555;
+      background: #111;
+      border: 1px solid #222;
+      padding: 3px 9px;
+      border-radius: 100px;
+      margin-bottom: 16px;
+    }
+    .roadmap-card h3 {
+      font-size: 0.93rem;
+      font-weight: 700;
+      color: #c8c8c8;
+      margin-bottom: 8px;
+      letter-spacing: -0.1px;
+    }
+    .roadmap-card p {
+      font-size: 0.83rem;
+      color: #444;
+      line-height: 1.65;
+    }
+    .roadmap-card .roadmap-features {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .roadmap-card .roadmap-features span {
+      font-size: 0.78rem;
+      color: #383838;
+      padding-left: 12px;
+      position: relative;
+    }
+    .roadmap-card .roadmap-features span::before {
+      content: '·';
+      position: absolute;
+      left: 2px;
+      color: #333;
+    }
+
+    /* ─────────────────── BUGS ─────────────────── */
+    .bugs-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 700px) { .bugs-layout { grid-template-columns: 1fr; } }
+    .bugs-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+    }
+    .bugs-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .bugs-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
+    .bugs-email-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--green);
+      border: 1px solid rgba(83,252,24,0.2);
+      background: rgba(83,252,24,0.04);
+      padding: 10px 18px;
+      border-radius: 8px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .bugs-email-link:hover {
+      background: rgba(83,252,24,0.08);
+      border-color: rgba(83,252,24,0.35);
+      text-decoration: none;
+    }
+    .bugs-tips {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .bugs-tips li {
+      display: flex;
+      gap: 10px;
+      font-size: 0.84rem;
+      color: #444;
+      line-height: 1.5;
+    }
+    .bugs-tips li::before {
+      content: '—';
+      color: #2a2a2a;
+      flex-shrink: 0;
+    }
+
+    /* ─────────────────── AVAILABILITY BANNER ─────────────────── */
+    .avail-banner {
+      background: linear-gradient(135deg, rgba(83,252,24,0.05) 0%, transparent 60%);
+      border: 1px solid rgba(83,252,24,0.15);
+      border-radius: 16px;
+      padding: 32px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 60px;
+    }
+    .avail-left {}
+    .avail-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 10px;
+    }
+    .avail-status-dot {
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .avail-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+      margin-bottom: 6px;
+    }
+    .avail-desc { font-size: 0.87rem; color: var(--muted); line-height: 1.6; }
+    .avail-right { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .avail-stat {
+      text-align: center;
+      padding: 14px 22px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .avail-stat-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .avail-stat-val.green { color: var(--green); }
+    .avail-stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 2px; letter-spacing: 0.3px; }
+
+    /* ─────────────────── FOOTER ─────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 48px 36px;
+    }
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .footer-brand-block {}
+    .footer-brand {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .footer-brand-mark {
+      width: 22px; height: 22px;
+      background: var(--green);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .footer-tagline { font-size: 0.8rem; color: var(--muted); }
+    .footer-links-group { display: flex; gap: 28px; }
+    .footer-links-group a { font-size: 0.82rem; color: var(--muted); transition: color 0.15s; }
+    .footer-links-group a:hover { color: #aaa; text-decoration: none; }
+    .footer-bottom {
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .footer-copy { font-size: 0.76rem; color: #252525; }
+    .footer-unofficial {
+      font-size: 0.73rem;
+      color: #222;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .footer-unofficial::before {
+      content: '';
+      display: block;
+      width: 4px; height: 4px;
+      background: #222;
+      border-radius: 50%;
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 20px; }
+      section { padding: 72px 20px; }
+      .note-bar { padding: 20px; }
+      footer { padding: 32px 20px; }
+      .hero { padding: 100px 20px 72px; }
+      .hero-stats { gap: 32px; }
+      .exp-steps { grid-template-columns: 1fr 1fr; }
+      .exp-steps::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M3 7c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#000" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="7" cy="10" r="1.5" fill="#000"/>
+      </svg>
+    </div>
+    Kick Whispers
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#moderation">Moderation</a>
+    <a href="#how-dms-work">How It Works</a>
+    <a href="#coming-soon">Roadmap</a>
+    <a href="#bugs">Bugs</a>
+    <a href="./index.html">Privacy</a>
+    <a href="https://chromewebstore.google.com/detail/kick-whispers/ekhnjlchhhmhlfiiioghgcdbfilaccjc" target="_blank" class="btn-nav">Install Free</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-bg">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-glow-2"></div>
+  </div>
+
+  <div class="hero-eyebrow">
+    <span class="hero-eyebrow-text">Chrome Extension</span>
+    <div class="hero-eyebrow-sep"></div>
+    <span class="hero-eyebrow-text">Kick.com</span>
+    <div class="hero-eyebrow-sep"></div>
+    <span class="hero-eyebrow-tag">Unofficial</span>
+  </div>
+
+  <h1>Private messaging<br>for <em>Kick</em></h1>
+  <p class="hero-sub">A lightweight companion extension that adds private, account-linked direct messaging to your Kick experience.</p>
+
+  <div class="hero-actions">
+    <a href="https://chromewebstore.google.com/detail/kick-whispers/ekhnjlchhhmhlfiiioghgcdbfilaccjc" target="_blank" class="btn-primary">Install on Chrome — Free</a>
+    <a href="./index.html" class="btn-ghost">Privacy Policy</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-val"><span>250</span></div>
+      <div class="hero-stat-label">Free slots available</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">1<span>k</span></div>
+      <div class="hero-stat-label">Total user cap</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val"><span>Real-</span>time</div>
+      <div class="hero-stat-label">Delivery</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<section id="features">
+  <div class="inner">
+
+    <div class="avail-banner">
+      <div class="avail-left">
+        <div class="avail-status">
+          <div class="avail-status-dot"></div>
+          Live on Chrome Web Store
+        </div>
+        <div class="avail-title">Free for the first 250 users</div>
+        <p class="avail-desc">Kick Whispers is live now. Free access is capped at 250 users — the extension supports up to 1,000 total. Grab a spot while it's open.</p>
+      </div>
+      <div class="avail-right">
+        <div class="avail-stat">
+          <div class="avail-stat-val green">250</div>
+          <div class="avail-stat-label">Free slots</div>
+        </div>
+        <div class="avail-stat">
+          <div class="avail-stat-val">1,000</div>
+          <div class="avail-stat-label">Total cap</div>
+        </div>
+        <a href="https://chromewebstore.google.com/detail/kick-whispers/ekhnjlchhhmhlfiiioghgcdbfilaccjc" target="_blank" class="btn-primary" style="white-space:nowrap;">Install Free</a>
+      </div>
+    </div>
+
+    <div class="eyebrow">What It Does</div>
+    <div class="sec-title">Everything you need<br>for private messaging on Kick</div>
+    <p class="sec-sub">A seamless overlay — no new tabs, no separate apps, no friction.</p>
+
+    <div class="bento">
+      <!-- Row 1 -->
+      <div class="bento-card span-7" style="min-height:200px;">
+        <div class="bento-glow"></div>
+        <div class="bento-card-tag">Core</div>
+        <h3>Private Direct Messaging</h3>
+        <p>Enables private, direct messaging between users — start, read, and reply to one-to-one conversations from right inside your browser without leaving Kick.</p>
+      </div>
+      <div class="bento-card span-5" style="min-height:200px;">
+        <div class="bento-card-tag">Storage</div>
+        <h3>Synced Conversation History</h3>
+        <p>Stores and syncs your conversation history so chats are always available, with continuity across sessions.</p>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="bento-card span-4">
+        <div class="bento-card-tag">Safety</div>
+        <h3>Block &amp; Safety Controls</h3>
+        <p>Block or unblock users and rely on built-in anti-abuse protections to keep your inbox safe.</p>
+      </div>
+      <div class="bento-card span-4">
+        <div class="bento-card-tag">Auth</div>
+        <h3>OAuth Account Connection</h3>
+        <p>Connect via OAuth to establish your Kick identity and maintain secure session integrity.</p>
+      </div>
+      <div class="bento-card span-4">
+        <div class="bento-card-tag">Pro</div>
+        <h3>Optional Pro Subscription</h3>
+        <p>Supports Pro subscription features when billing is enabled, managed securely via Stripe.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── WHO IT'S FOR ── -->
+<section class="alt-section" id="who">
+  <div class="inner">
+    <div class="eyebrow">Who It's For</div>
+    <div class="sec-title">Built for Kick users<br>who want more</div>
+    <p class="sec-sub">Simple, focused, and easy to use from day one.</p>
+
+    <div class="audience-grid">
+      <div class="audience-card">
+        <div class="audience-num">Audience 01</div>
+        <h3>Users who want private messaging</h3>
+        <p>A lightweight private messaging layer that fits right into the Kick experience you already use — no learning curve.</p>
+      </div>
+      <div class="audience-card">
+        <div class="audience-num">Audience 02</div>
+        <h3>Users who need conversation controls</h3>
+        <p>Simple tools for managing conversations, blocking users, and keeping your account safe from abuse.</p>
+      </div>
+    </div>
+
+    <div class="exp-steps">
+      <div class="exp-step">
+        <div class="exp-step-circle">01</div>
+        <h4>Install</h4>
+        <p>Add Kick Whispers to Chrome in one click from the Web Store.</p>
+      </div>
+      <div class="exp-step">
+        <div class="exp-step-circle">02</div>
+        <h4>Connect via OAuth</h4>
+        <p>Establish your Kick identity and session integrity — no new accounts.</p>
+      </div>
+      <div class="exp-step">
+        <div class="exp-step-circle">03</div>
+        <h4>Start a DM</h4>
+        <p>Click any username and open a private conversation instantly.</p>
+      </div>
+      <div class="exp-step">
+        <div class="exp-step-circle">04</div>
+        <h4>Manage &amp; Control</h4>
+        <p>Block users, manage conversations, and handle everything from the extension.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MODERATION ── -->
+<section id="moderation">
+  <div class="inner">
+    <div class="mod-layout">
+      <div class="mod-sticky">
+        <div class="eyebrow">Moderation</div>
+        <div class="sec-title" style="margin-bottom: 20px;">How moderation<br>is handled</div>
+        <p class="mod-description">We actively moderate private messaging to protect users and platform health. Our system combines multiple layers of protection rather than relying on a single check.</p>
+        <p class="mod-disclaimer">We do not publish internal detection logic in detail to prevent abuse circumvention.</p>
+      </div>
+
+      <div class="mod-items">
+        <div class="mod-item">
+          <div class="mod-num">01</div>
+          <div class="mod-content">
+            <strong>Verified access only</strong>
+            <span>Users must authenticate before using messaging.</span>
+          </div>
+        </div>
+        <div class="mod-item">
+          <div class="mod-num">02</div>
+          <div class="mod-content">
+            <strong>Abuse prevention controls</strong>
+            <span>Rate limits, spam detection, and behavior controls help stop flooding and repeated abuse.</span>
+          </div>
+        </div>
+        <div class="mod-item">
+          <div class="mod-num">03</div>
+          <div class="mod-content">
+            <strong>Automated safety screening</strong>
+            <span>Messages are evaluated for prohibited categories — scam links, violent threats, severe harassment, and other disallowed content.</span>
+          </div>
+        </div>
+        <div class="mod-item">
+          <div class="mod-num">04</div>
+          <div class="mod-content">
+            <strong>Policy enforcement in real time</strong>
+            <span>Disallowed messages are blocked before normal delivery, and safety events are logged for operational review.</span>
+          </div>
+        </div>
+        <div class="mod-item">
+          <div class="mod-num">05</div>
+          <div class="mod-content">
+            <strong>User controls</strong>
+            <span>Users can block and unblock others. Restricted users cannot message through those blocks.</span>
+          </div>
+        </div>
+        <div class="mod-item">
+          <div class="mod-num">06</div>
+          <div class="mod-content">
+            <strong>Ongoing tuning</strong>
+            <span>Moderation rules and thresholds are reviewed and adjusted as safety needs evolve.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW DMs WORK ── -->
+<section id="how-dms-work" class="alt-section">
+  <div class="inner">
+    <div class="eyebrow">Mechanics</div>
+    <div class="sec-title">How private messages work</div>
+    <p class="sec-sub">One-to-one DMs between users who opt in and authenticate their account.</p>
+
+    <div class="dm-intro-grid">
+      <div class="dm-card">
+        <div class="dm-card-label">Delivery Model</div>
+        <p class="dm-card-value">Messages are sent in real time through the Kick Whispers backend — not through native Kick whisper APIs.</p>
+      </div>
+      <div class="dm-card">
+        <div class="dm-card-label">Who Can Message</div>
+        <p class="dm-card-value">Only authenticated, opted-in users in the system. Blocks are enforced at the delivery layer.</p>
+      </div>
+      <div class="dm-card">
+        <div class="dm-card-label">Safety Before Delivery</div>
+        <p class="dm-card-value">Messages pass moderation and anti-abuse checks before final delivery — nothing reaches your inbox unscreened.</p>
+      </div>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-header">
+        <span>Tier</span>
+        <span>History Behavior</span>
+      </div>
+      <div class="tier-row">
+        <div>
+          <div class="tier-badge free">
+            <div class="tier-badge-dot"></div>
+            Free &nbsp;↔&nbsp; Free
+          </div>
+        </div>
+        <p class="tier-desc">Runtime / temporary history — not designed as permanent lifetime storage.</p>
+      </div>
+      <div class="tier-row">
+        <div>
+          <div class="tier-badge pro">
+            <div class="tier-badge-dot"></div>
+            Any chat with Pro
+          </div>
+        </div>
+        <p class="tier-desc">Conversation history is persisted for long-term access. Upgrading to Pro removes Free messaging limits and enables persistent history for all Pro-involved chats.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── COMING SOON ── -->
+<section id="coming-soon" class="alt-section">
+  <div class="inner">
+    <div class="eyebrow">Roadmap</div>
+    <div class="sec-title">What's coming next</div>
+    <p class="sec-sub">Features actively being built. No ETAs — shipped when ready and stable.</p>
+
+    <div class="roadmap-grid">
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Coming Soon</div>
+        <h3>Group Chats</h3>
+        <p>Private rooms for multiple users with full member management.</p>
+        <div class="roadmap-features">
+          <span>Private rooms</span>
+          <span>Member list</span>
+          <span>Invite links</span>
+          <span>Admin controls</span>
+        </div>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Coming Soon</div>
+        <h3>Message Requests</h3>
+        <p>Inbox filtering so unknown users don't land directly in your main chats.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Coming Soon</div>
+        <h3>Read Receipts &amp; Typing Status</h3>
+        <p>Optional toggles for more real-time context in conversations.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Coming Soon</div>
+        <h3>Reactions &amp; Reply Threads</h3>
+        <p>Better conversation quality — message reactions and inline reply threads without the noise.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Coming Soon</div>
+        <h3>Pinned Chats &amp; Favorites</h3>
+        <p>Quick access to your most frequent contacts. Pin conversations and mark favorites.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Coming Soon</div>
+        <h3>Account Safety Center</h3>
+        <p>Report users, mute, set keyword filters, and receive safety notifications in one place.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Coming Soon</div>
+        <h3>Stronger Moderation Controls</h3>
+        <p>User report pipeline with trust and safety review tools for platform health.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Pro</div>
+        <h3>Pro Team &amp; Creator Tools</h3>
+        <p>Expanded moderator roles, shared inbox, and premium support for power users and creators.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-pill">Infra</div>
+        <h3>Performance &amp; Reliability</h3>
+        <p>Reconnect recovery, improved uptime, and message queueing during traffic spikes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BUGS ── -->
+<section id="bugs">
+  <div class="inner">
+    <div class="eyebrow">Bug Reports</div>
+    <div class="sec-title">Found something broken?</div>
+    <p class="sec-sub">Kick Whispers is in active development. If something doesn't work, tell us — every report helps.</p>
+
+    <div class="bugs-layout">
+      <div class="bugs-card">
+        <h3>Report a Bug</h3>
+        <p>Send a report to the email below. Include what happened, what you expected, and your Chrome version if you can — it speeds up the fix significantly.</p>
+        <a href="mailto:kaalaldeepak5@gmail.com?subject=Kick Whispers Bug Report" class="bugs-email-link">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="#53fc18" stroke-width="1.2"/>
+            <path d="M1 4.5l6 4 6-4" stroke="#53fc18" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          kaalaldeepak5@gmail.com
+        </a>
+      </div>
+      <div class="bugs-card">
+        <h3>What to include</h3>
+        <p style="margin-bottom:16px;">A good bug report gets fixed faster. Try to include:</p>
+        <ul class="bugs-tips">
+          <li>What you were doing when the issue happened</li>
+          <li>What you expected vs. what actually occurred</li>
+          <li>Your Chrome version and OS</li>
+          <li>Whether it happens every time or only sometimes</li>
+          <li>Any error messages or unusual behavior you noticed</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DISCLAIMER BAR ── -->
+<div class="note-bar">
+  <div class="note-bar-icon"></div>
+  <p>Kick Whispers is an independent product and is not affiliated with, endorsed by, or produced by Kick.com. It is a companion tool and does not replace Kick's core platform features. For full data and privacy details, see the <a href="./index.html">Privacy Policy</a>.</p>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand-block">
+      <div class="footer-brand">
+        <div class="footer-brand-mark">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2.5 6c0-1.93 1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="6" cy="9" r="1.3" fill="#000"/>
+          </svg>
+        </div>
+        Kick Whispers
+      </div>
+      <div class="footer-tagline">Private messaging for Kick</div>
+    </div>
+    <div class="footer-links-group">
+      <a href="./index.html">Privacy Policy</a>
+      <a href="#features">Features</a>
+      <a href="#moderation">Moderation</a>
+      <a href="mailto:kaalaldeepak5@gmail.com">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; 2026 Kick Whispers. All rights reserved.</div>
+    <div class="footer-unofficial">Not affiliated with Kick.com</div>
+  </div>
+</footer>
+
+</body>
+</html>
