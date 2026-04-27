@@ -2,5 +2,11 @@
   "version": 2,
   "builds": [
     { "src": "*.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "^/$", "dest": "/Kick%20Whispers.html" },
+    { "src": "^/product$", "dest": "/product.html" },
+    { "src": "^/privacy$", "dest": "/privacy.html" },
+    { "src": "^/index\\.html$", "dest": "/privacy.html" }
   ]
 }
